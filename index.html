@@ -5,7 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>タロット占い</title>
   <style>
-    :root{ --border:#ddd; --bg:#fafafa; --ink:#111; --muted:#666; }
+    :root{
+      --border:#ddd;
+      --bg:#fafafa;
+      --ink:#111;
+      --muted:#666;
+      --deck-unshuffled:#fff6cc; /* 薄い黄色 */
+      --deck-shuffled:#e8f4ff;   /* 薄い水色 */
+    }
     body{
       font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
       margin:0; color:var(--ink); background:#fff;
@@ -37,7 +44,7 @@
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid var(--border);
-      background:#fff;
+      background: var(--deck-unshuffled);
     }
 
     .meta{
@@ -47,7 +54,6 @@
       line-height: 1.7;
     }
 
-    /* 横並び入力 */
     .inputs{ margin-top:12px; display:grid; gap:10px; }
     .inputRow{ display:grid; gap:10px; grid-template-columns: 1fr; }
     @media (min-width: 640px){
@@ -125,7 +131,6 @@
     <h1>タロット占い</h1>
 
     <div class="card">
-      <!-- 上部：シャッフル｜山札状態｜リセット -->
       <div class="topRow">
         <button id="shuffleBtn">🔀 シャッフル</button>
         <div id="deckStatus" class="deckStatus">山札：未シャッフル</div>
@@ -133,7 +138,7 @@
       </div>
 
       <div class="meta">
-        ・番号は <b>1〜156</b>（78枚×正位置/逆位置）<br/>
+        ・番号は <b>1〜156</b><br/>
         ・1枚引きは「番号2・番号3」を空欄（または0）でOK
       </div>
 
@@ -176,7 +181,6 @@
   <div class="toast" id="toast">コピーしたよ</div>
 
   <script>
-    // --- カード生成 ---
     const major = [
       "愚者","魔術師","女教皇","女帝","皇帝","教皇","恋人","戦車","力","隠者","運命の輪",
       "正義","吊るされた男","死神","節制","悪魔","塔","星","月","太陽","審判","世界"
@@ -197,7 +201,6 @@
       }
       return cards;
     }
-
     function shuffle(a){
       for(let i=a.length-1;i>0;i--){
         const j=Math.floor(Math.random()*(i+1));
@@ -217,6 +220,9 @@
 
     function updateDeckStatus(){
       deckStatus.textContent = `山札：${shuffled ? "シャッフル済" : "未シャッフル"}`;
+      deckStatus.style.background = shuffled
+        ? "var(--deck-shuffled)"
+        : "var(--deck-unshuffled)";
     }
 
     function clearNums(){
@@ -233,8 +239,31 @@
       const picked = nums.map((n,i)=>`カード${i+1}：${deck[n-1].name}（${deck[n-1].pos}）`);
       const resultText = picked.join("\n");
       resultBox.textContent = resultText;
-      info.value = `${resultText}\n\n◾️上のカードで占って\n・明日の運勢\n・ラッキーアイテム\n・キャッチフレーズ\n・金運\n・進む／止まる　どっち？\n・総合点　★10個中何個？`;
+      info.value =
+`${resultText}
+
+◾️上のカードで占って
+・明日の運勢
+・ラッキーアイテム
+・キャッチフレーズ
+・金運
+・進む／止まる　どっち？
+・総合点　★10個中何個？`;
     }
+
+    // Enterキーで次へ
+    ["n1","n2","n3"].forEach((id,idx,arr)=>{
+      $(id).addEventListener("keydown",e=>{
+        if(e.key==="Enter"){
+          e.preventDefault();
+          if(idx < arr.length-1){
+            $(arr[idx+1]).focus();
+          }else{
+            $("openBtn").click();
+          }
+        }
+      });
+    });
 
     $("shuffleBtn").onclick = ()=>{
       deck=[...originalDeck];
